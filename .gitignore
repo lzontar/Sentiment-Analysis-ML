@@ -114,3 +114,6 @@ junit.xml
 # Data
 testdata.manual.2009.06.14.csv
 training.1600000.processed.noemoticon.csv
+data/glove/glove*
+data/preprocessing/final_data*
+*.h5
