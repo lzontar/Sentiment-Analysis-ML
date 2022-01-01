@@ -9,7 +9,7 @@ from sklearn import metrics
 import random
 import time
 import seaborn as sns
-
+from textblob import TextBlob
 
 def is_true_dict(dict, key):
     return key in dict.keys() and dict[key]
@@ -136,14 +136,24 @@ def visualizeData(X, y):
     # Sentiment  distribution
     neg = list(filter(lambda x: x == 0, list(y)))
     df = pd.DataFrame({
-        'Text polarity': ['Positive', 'Negative'],
+        'Sentiment': ['Positive', 'Negative'],
         'Count': [len(y) - len(neg), len(neg)]
     })
-    sns.barplot(x=df['Text polarity'], y=df['Count'])
-    plt.title('Text polarity distribution')
+    sns.barplot(x=df['Sentiment'], y=df['Count'])
+    plt.title('Sentiment distribution')
     plt.savefig('../data/results/fig/text_polarity_distr.png')
     plt.show()
     plt.close()
+
+    df_w_pol = pd.DataFrame(X)
+    df_w_pol['Polarity'] = df_w_pol['text'].map(lambda text: TextBlob(text).sentiment.polarity)
+    sns.displot(df_w_pol, x="Polarity", bins=24, kde=True)
+    plt.title('Polarity distribution')
+    plt.tight_layout()
+    plt.savefig('../data/results/fig/polarity_distr.png')
+    plt.show()
+    plt.close()
+
 
 
 def set_seed(seed_value=42):

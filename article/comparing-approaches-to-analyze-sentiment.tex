@@ -392,7 +392,9 @@ Email: lz3057@student.uni-lj.si}}
 \begin{abstract}
 Sentiment analysis can help us automatically determine writer's attitude towards the text on enormous datasets. In practice, it helps companies make important business decisions and evaluate public opinions on their products. This article should help readers understand different machine learning approaches to sentiment analysis. We also explain how textual data should be preprocessed generally and for different models. 
 
-This article focuses on deep learning machine learning models. At first, we take the Naive Bayesian model to compare it with more complex machine learning  learning models. In particular, we try to evaluate a deep neural network with LSTM architecture and a BERT model that was fine-tuned on data that was used in training and validationof other models. As our dataset, we used Sentiment140, which contains pre-classified Twitter posts. In the end, we combine the aforementioned models to construct a majority voting ensemble model.
+This article focuses on deep learning machine learning models. At first, we take the Naive Bayesian model to compare it with more complex machine learning  learning models. In particular, we try to evaluate a deep neural network with LSTM architecture and a BERT model that was fine-tuned on data that was used in training and validation of other models. As our dataset, we used Sentiment140, which contains pre-classified Twitter posts. In the end, we combine the aforementioned models to construct a majority voting ensemble model.
+
+We found that a fine-tuned BERT yields best results, but also overfits on training data, while dropping almost 20\% on scores of all evaluation metrics on new data. On the other hand, the LSTM architecture provides us with slightly lower performance, but also lower decrease in classification scores on new data, which dropped to around 6\%. While BERT in general outperforms LSTM, the latter performs better on classification of negative sentiment. We chose Naive Bayesian classifier as our baseline model and all other three models yield better results, thus, beating the baseline model. With a fine-tuned BERT model, we managed to reach almost 77.5\% accuracy, while with LSTM the accuracy dropped to 74.5\%.
 
 
 \end{abstract}
@@ -424,8 +426,6 @@ In practice, sentiment analysis helps us automatically process enormous amounts 
 
 Furthermore, it can help better understand public opinions about a particular subject. This can help politics predicting voting results and consequently form alliances between parties. Understanding people's opionions can also make us better investors, since stock market stability depends on other investors.
 
- which can help us predicting voting results or even stock market state. 
-
 In this article, we focus on comparing different sentiment analysis techniques. The goal of this article is to help readers understand different types of sentiment analysis approaches and when they should be used. We explain different preprocessing techniques and compare a baseline Naive Bayesian model with more complex deep learning based models LSTM and BERT. In the end, we compare results with a majority voting ensemble model that is combined of all three aforementioned models. 
 
 For learning and validation we use the Sentiment140 dataset, which contains pre-classified Twitter posts. Tweets represent the general public and thus all sorts of opinions can be found in the dataset we used. Some opinions are stronger and in some it is difficult to determine the writer's inclination towards the text topic. This makes the given dataset an appropriate training and validation set.
@@ -453,7 +453,18 @@ A novel approach was proposed by Devlin and colleauges \cite{devlin2019bert}, wh
 In this section, we explain different methods that were used in this comparative study. Firstly, we describe the data that we used to get our results. Next, we explain the preprocessing methodology and finally, we describe the machine learning models that were used in this research. We used four different models: Naive Bayesian classifier, neural network with deep bidirectional LSTM architecture, BERT model fine-tuned with our data and a majority voting ensemble classifier.
 
 \subsection{Data}
-As already mentioned, we decided to use the \href{https://www.kaggle.com/kazanova/sentiment140}{Sentiment140 dataset} that contains 1,600,000 tweets extracted using Twitter API. In Figure \ref{pic1} we can see the most common words in the wordcloud representation. Due to time complexity of our research, we only use a randomly sampled subset of 40,000 tweets. While the dataset holds multiple features, we only use the tweet text and target variable from which we filter out the neutral tweets to make our problem a binary classification problem. Also, the positive tweet polarity, which is denoted with 4 is mapped to 1 due to convenience.
+As already mentioned, we decided to use the \href{https://www.kaggle.com/kazanova/sentiment140}{Sentiment140 dataset} \cite{sentiment140} that contains 1,600,000 tweets extracted using Twitter API. The initial dataset hodls multiple features:
+\begin{enumerate}
+	\item Target - polarity of the tweet,
+	\item Id - the id of the tweet,
+	\item Date - the date of the tweet,
+	\item Flag - the query (lyx). If there is no query, then this value is NO\_QUERY.
+	\item User - the user that tweeted.
+	\text Text - the text of the tweet.
+\end{enumerate}
+We decided that only text is relevant for our study and the models we use are trained only with the text column, while we are trying to predict the target column.
+
+In Figure \ref{pic1} we can see the most common words in the wordcloud representation. Due to time complexity of our research, we only use a randomly sampled subset of 40,000 tweets. While the dataset holds multiple features, we only use the tweet text and target variable from which we filter out the neutral tweets to make our problem a binary classification problem. Also, the positive tweet polarity, which is denoted with 4 is mapped to 1 due to convenience.
 
 \begin{figure}[hbt!]\centering
 \centering
@@ -482,22 +493,31 @@ We also tried to improve evaluation metric scores with stemming words, fixing mi
 \label{pic2}
 \end{figure}
 
-In Figure \ref{pic3}, we can see the distribution of tweet length after preprocessing. This later helpes us define parameters and model complexities in neural networks.
+In Figure \ref{pic3}, we can see the distribution of tweet word count after preprocessing. This later helpes us define parameters and model complexities in neural networks. 
 
 \begin{figure}[hbt!]\centering
 \centering
 \includegraphics[width=\linewidth]{tweet-len-distr}
-\caption{\textbf{Preprocessed tweet length distribution:} as can be seen from the figure, the distribution is right-skewed. This means that more tweets are short. The distribution does not have a long tail, which is why, we do not have to handle outliers in this situation.}
+\caption{\textbf{Preprocessed tweet word count distribution:} as can be seen from the figure, the distribution is right-skewed. This means that tweets are short in general. The distribution does not have a long tail, which is why, we do not have to handle outliers in this situation.}
 \label{pic3}
 \end{figure}
 
+We also evaluated polarity of texts using the \textit{TextBlob} library, which tokenizes words and evaluates sentiment by looking at the \textit{SentiWordNet} \cite{sentilex} lexical resource. For every word in \textit{WordNet}, the lexical resource returns positivity, negativity and neutrality score. In continuation, in Figure \ref{pic123} we see how polarity varies in our texts.
 
+\begin{figure}[hbt!]\centering
+\centering
+\includegraphics[width=\linewidth]{polarity-distr}
+\caption{\textbf{Polarity distribution:} as can be seen from the figure, the distribution peaks in the middle, meaning that the majority of tweets would be interpreted as neutral if handled with \textit{TextBlob} library. Otherwise, it seems as though \textit{TextBlob} would evaluate more tweets as positive than negative.}
+\label{pic123}
+\end{figure}
 
 \subsection{Naive Bayes}
 Naive Bayesian classifier is one of the fastest and easiest methods that can also perform very well. The basic idea of this classifier is to find the probabilities of classes based on the input text. Textual data is passed to the model with word count vectors. With bigger datasets this model overfits, however, it tends to be used as the baseline model.
 
 \subsection{LSTM}
-As already mentioned, LSTM has been proven to be very succesful in sentiment analysis. We used the aforementioned bidirectional LSTM architecture with GloVe word embeddings instead of matrix of tokenized word encodings. We used GloVe with 200 dimensional representations. Next, we describe the architecture of the LSTM model in more detail:
+As mentioned before, the LSTM architecture was designed to grasp long term dependence between words. With it, we build a recurrent neural network that can memorize certain patterns, which general recurrent neural networks cannot.
+
+As already mentioned, LSTM has been proven to be very succesful in sentiment analysis. We implemented the aforementioned bidirectional LSTM architecture with GloVe word embeddings instead of matrix of tokenized word encodings. We used GloVe with 200 dimensional representations. Next, we describe the architecture of the LSTM model in more detail:
 \begin{enumerate}
 	\item Model accepts a matrix of tokenized tweets padded to the pre-defined maximum length. This was set to 60 due to tweet length distribution.
 	\item To decrease the chance of overfitting, we transform this matrix to a matrix of word embeddings and only use the top 4000 most common words.
@@ -507,7 +527,27 @@ As already mentioned, LSTM has been proven to be very succesful in sentiment ana
 	\item We use binary crossentropy loss function and Adam optimizer.
 \end{enumerate}
 
-Despite all the precautions we did against overfitting, the model performance still becomes too dependent on the training set after first few epochs as we can see in Figures \ref{pic4}, \ref{pic5}. 
+\subsection{BERT}
+BERT, which stands for bidirectional encoder representations from transformers, uses bost previous and next tokens to make predictions. It randomly masks words in a particular context and predicts them.
+
+We used the base uncased BERT and fine-tuned it on Sentiment140 dataset. In this case, no hyperparameter tuning was done due to time complexity and since authors of BERT have already suggested the optimal parameters:
+\begin{enumerate}
+	\item Tokenizer uses at most 64 words, which in our case is sufficient and also similar to the LSTM setting.
+	\item Batch size: 32.
+	\item Learning rate: 0.00002
+	\item Epochs in fine-tuning: 4.
+	\item Similarly as in LSTM, we used Adam optimizer and crossentropy loss.
+\end{enumerate}
+
+
+\subsection{Majority voting ensemble classifier}
+Lastly, we explain the ensemble classifier that exploits the aforementioned three models and predicts the class with majority voting \cite{10.1145/3126858.3126861}. The model takes predictions of other models and returns the class that was predicted by the most models. With such ensemble method, we should get a more robust model. Evaluation metric scores could also be increased with such methods.
+
+\section{Results}
+Finally, we present results using the methodology that we described above. To better understand, how well our models generalize, we used a stratified 10-fold cross validation in all the models. Stratified k-fold cross validation folds are made by preserving the percentage of samples for each class.
+Using local resources with 6GB GPU, we managed to train 33 different models. The results on full training and testing datasets are further explained in Table \ref{tab1}
+
+When training the LSTM model, despite all the precautions we did against overfitting, the model performance still becomes too dependent on the training set after first few epochs as we can see in Figures \ref{pic4}, \ref{pic5}. However, LSTM with early stopping does not overfit as much as the other models. Figure \ref{pic7} shows, how much the models' performances decrease on new data. We note that LSTM is the most robust in our case, while BERT, the least robust model, yields best scores in all the evaluation metrics. To interpret model's performance we decided to use precision, accuracy, recall and F1 score. While scores in all evaluation metrics are very similar, LSTM scores much better on classifying negative sentiment. These results are further explained in Figure \ref{pic6}.
 
 \begin{figure}[hbt!]\centering
 \centering
@@ -523,52 +563,59 @@ Despite all the precautions we did against overfitting, the model performance st
 \label{pic5}
 \end{figure}
 
-\subsection{BERT}
-
-
-\subsection{Majority voting ensemble classifier}
-Lastly, we explain the ensemble classifier that exploits the aforementioned three models and predicts the class with majority voting. With such ensemble method, we should get a more robust model. Evaluation metric scores could also be increased with such methods.
-
-\section{Results}
-Finally, we present results using the methodology that we described above. To better understand, how well our models generalize, we used a 10-fold cross validation in all the models. Using local resources with 6GB GPU, we managed to train 33 different models.
-
 \begin{table*}
 \centering
 \begin{adjustbox}{width=0.8\textwidth}
 \begin{tabular}{lllllllll}
 \hline
-\textbf{Algorithm}                                                                           & \multicolumn{2}{c}{\textbf{Accuracy}} & \multicolumn{2}{c}{\textbf{Precision}} & \multicolumn{2}{c}{\textbf{Recall}} & \multicolumn{2}{c}{\textbf{F1 score}} \\ \hline
-\multicolumn{1}{l|}{}                                                                        & Train   & \multicolumn{1}{l|}{Test}   & Train   & \multicolumn{1}{l|}{Test}    & Train  & \multicolumn{1}{l|}{Test}  & Train             & Test              \\ \cline{2-9} 
-\multicolumn{1}{l|}{\textbf{Naive Bayes}}                                                    & 0.855   & \multicolumn{1}{l|}{0.733}  & 0.855   & \multicolumn{1}{l|}{0.739}   & 0.857  & \multicolumn{1}{l|}{0.725} & 0.856             & 0.732             \\
-\multicolumn{1}{l|}{\textbf{LSTM}}                                                           & 0.810   & \multicolumn{1}{l|}{0.745}  & 0.790   & \multicolumn{1}{l|}{0.730}   & 0.848  & \multicolumn{1}{l|}{0.781} & 0.818             & 0.755             \\
-\multicolumn{1}{l|}{\textbf{BERT}}                                                           & 0.951   & \multicolumn{1}{l|}{0.775}  & 0.953   & \multicolumn{1}{l|}{0.783}   & 0.951  & \multicolumn{1}{l|}{0.763} & 0.952             & 0.773             \\
-\multicolumn{1}{l|}{\textbf{\begin{tabular}[c]{@{}l@{}}Majority classifier\end{tabular}}} & 0.896   & \multicolumn{1}{l|}{0.768}  & 0.890   & \multicolumn{1}{l|}{0.765}   & 0.905  & \multicolumn{1}{l|}{0.776} & 0.897             & 0.771             \\ \hline
+\textbf{\rule{0pt}{3ex} Algorithm}                                                                           & \multicolumn{2}{c}{\textbf{Accuracy}} & \multicolumn{2}{c}{\textbf{Precision}} & \multicolumn{2}{c}{\textbf{Recall}} & \multicolumn{2}{c}{\textbf{F1 score}} \\ \hline
+\multicolumn{1}{l|}{}                                                                        & \rule{0pt}{3ex} Train   & \multicolumn{1}{l|}{Test}   & Train   & \multicolumn{1}{l|}{Test}    & Train  & \multicolumn{1}{l|}{Test}  & Train             & Test              \\ \cline{2-9} 
+\multicolumn{1}{l|}{\textbf{Naive Bayes}}                                                    & \rule{0pt}{3ex} 0.855   & \multicolumn{1}{l|}{0.733}  & 0.855   & \multicolumn{1}{l|}{0.739}   & 0.857  & \multicolumn{1}{l|}{0.725} & 0.856             & 0.732             \\
+\multicolumn{1}{l|}{\textbf{LSTM}}                                                           & \rule{0pt}{3ex} 0.810   & \multicolumn{1}{l|}{0.745}  & 0.790   & \multicolumn{1}{l|}{0.730}   & 0.848  & \multicolumn{1}{l|}{0.781} & 0.818             & 0.755             \\
+\multicolumn{1}{l|}{\textbf{BERT}}                                                           & \rule{0pt}{3ex} 0.951   & \multicolumn{1}{l|}{0.775}  & 0.953   & \multicolumn{1}{l|}{0.783}   & 0.951  & \multicolumn{1}{l|}{0.763} & 0.952             & 0.773             \\
+\multicolumn{1}{l|}{\textbf{\begin{tabular}[c]{@{}l@{}}Majority classifier\end{tabular}}} & \rule{0pt}{3ex} 0.896   & \multicolumn{1}{l|}{0.768}  & 0.890   & \multicolumn{1}{l|}{0.765}   & 0.905  & \multicolumn{1}{l|}{0.776} & 0.897             & 0.771             \\ \hline
 \end{tabular}
 \end{adjustbox}
 \vspace*{0.2cm}
-\caption{}
-\label{pic3}
+\caption{\textbf{Results:} the upper table represents the results of our research. For all the models, we estimated accuracy, precision, recall and F1 score both on training and test sets. As we can see, the BERT model yields best results, beating LSTM and Naive Bayes by quite a few percents. The majority voting ensemble classifier yields comparable results. Furthermore, the latter model is also much more robust to new, unseen data. Comparing results on the training and test datasets provides us with an estimation of how much the model overfits.}
+\label{tab1}
 \end{table*}
 
 
 \begin{figure}[hbt!]\centering
 \centering
 \includegraphics[width=\linewidth]{cv-test}
-\caption{}
+\caption{\textbf{Results (10-fold CV - validation sets):} cross validation gives us a better idea of how well the model generalizes. As we can see BERT and majority voting ensemble classifier yield comparable results. LSTM results are slightly better than those of Naive Bayesian classifier. From the figure, we also denote that accuracy, precision, recall and F1 score are almost the same. This makes sense, since the problem is balanced, that is, classes are uniformly distributed. However, we see that the LSTM model returns a gap between precision and recall. Recall is much lower than precision, which means that our LSTM model is weaker in predicting positive sentiment in comparison to predicting negative sentiment. Also note that we can use cross validation to evaluate uncertainty of the model's performance. On barplot, the uncertainty is shown with the error line in the middle of the plots.}
 \label{pic6}
 \end{figure}
 
 \begin{figure}[hbt!]\centering
 \centering
 \includegraphics[width=\linewidth]{cv-overfitting}
-\caption{}
+\caption{\textbf{Results (10-fold CV - overfitting):} this figure represents an estimation of model's overfitting. We see that BERT overfits the most, dropping almost 20\% on all evaluation metric scores on new data. Majority voting classifier increases model's robustness and is comparable to Naive Bayes. The latter, baseline model also drops 15\% on all evaluation metric scores on new data. With several precautions, we managed to drop this drop of the LSTM performance on new data to just 6\%.}
 \label{pic7}
 \end{figure}
 
-
 \section{Discussion}
+In this section, we will try to interpret results and reason, why such results occur. In the Results section, we noticed that deep neural networks are much more succesful in sentiment analysis in comparison to the baseline model. On the other hand, we need to take into account time complexity of training such models. On a local computer with a 6GB GPU, we managed to gather results in the span of several days. Since in our case, we only needed to train the models once, this issue can be neglected. However, if everyday retraining would be required, we would either need more resources or we would need to use simpler models such as Naive Bayesian classifier.
+
+Our models could also be further improved by including more data and increasing model complexity. This was not feasible due to available resources. However, this probably affected our neural network models. Since neural networks assume that they will have a representable data subset , we should not be surprised with overfitting. Another reason for overfitting is that tweets are short and they are less likely to differ between samples, since people often copy others and talk about similar stuff. Thus, optimizers can fail to find proper solutions, since a solution can work for a subset of samples and fail for the rest.
+
+As we could see in the Results section, majority of models score similarly well in accuracy, precision, recall and F1 score. LSTM stands out, since recall is much lower than precision and precision is higher than accuracy and F1 score. This means that the LSTM model is much more succesful in evaluating negative context than positive. Recall is also lower in general, which might be due to language used in texts with negative sentiment. Perhaps, evaluating negative sentiment is slightly better. This might be a consequence of complex compounds such as sarcasm and irony.
+
+In comparison to results of related works, we achieve worse results, however, we did not expect the same results, since we used a different dataset. Firstly, tweets are short and thus, more complex models can have problems with overfitting. Secondly, majority of researches were done on movie and product review datasets. The scope of used language used in these texts is much more narrow. Movie and product reviews can also be found on Twitter, thus, datasets used in related works could be interpreted as a sort of subset of Sentiment140 dataset.
+
+As mentioned before, majority voting ensemble classifier provides us with a combination of results of LSTM and BERT models. Comparing with BERT, it scores comparable in all evaluation metric scores, while being more robust to new data. 
+
+To conclude, when choosing the algorithm for sentiment analysis, we would need to take into account the majority class in the training dataset. LSTM performs better on negative sentiment, while worse on positive sentiment. On the other hand, BERT performs better in sentiment analysis classification metrics such as accuracy, precision, recall and F1 score. If we want our model to be more robust, we should take appropriate precautions, when fitting our models.
+We should use word embeddings, such as GloVe, we should try to get the best complexity-performance ratio, we should lower the learning rate and stop learning the model when we notice overfitting.
 
 \section{Conclusion}
+To conclude, we found that working with textual data and classifying sentiment is not an easy task. Firstly, we tried to get the best preprocessing methodology, where we tried many combinations. We found that more complex preprocessing methods often yield worse results. Furthermore, we learned that sentiment analysis techniques are very slow, especially when we try to use lots of data, which is required in complex tasks such as this one.
+
+We compared 4 different sentiment analysis approaches and found that neural networks have truly dominated in this area in past years. A fine-tuned BERT and the LSTM architecture both yield better performances than Naive Bayesian classifier. However, as expected the majority voting ensemble classifier returns comparable performance on all evaluation metrics and model's robustness. While the BERT model yields better evaluation metric scores on validation set, it overfits. The model drops almost 20\% on scores of all evaluation metrics on new data. On the other hand, we used many precautions on LSTM to prevent overfitting, however, we lower model performance with this. We also noticed differences in performances on classification of negative sentiment versus classification on positive sentiment. With a fine-tuned BERT model, we managed to reach almost 77.5\% accuracy, while with LSTM the accuracy dropped to 74.5\%.
+
+Finally, we found that neural networks perform better than statistical methods in sentiment analysis classification. In future works, we could try fine-tuning BERT with the LSTM architecture and thus further improving accuracy. Additionally, we could also try to fit the BERT model using the precautions against overfitting that we used on the LSTM model. Another improvement of performance could be done by taking into account a bigger subset of data.
 
 % An example of a floating figure using the graphicx package.
 % Note that \label must occur AFTER (or within) \caption.

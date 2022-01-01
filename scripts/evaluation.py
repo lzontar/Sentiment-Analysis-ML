@@ -42,10 +42,10 @@ def getModelInstance(name, word_to_vec_map_, primary=False):
 
 if __name__ == '__main__':
     take_preprocessed = True
-    generate_figures = False
+    generate_figures = True
     generate_models = False
 
-    show_results = True
+    show_results = False
 
     model_names = ['NaiveBayes', 'BERT', 'LSTM']
     subsample_size = 40000
